@@ -5,7 +5,7 @@
 #include <sched.h>
 #include <math.h>
 
-/** Número de hilos del ordenador: 16
+/** Número de hilos del ordenador: 16.
  *  NUMBER_OF_THREADS debe tomar un valor entre 1 y 16
  * */
 #define NUMBER_OF_THREADS 16
