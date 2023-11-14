@@ -15,7 +15,7 @@
  *  NUMBER_OF_PROCESSES debe tomar un valor entre 1 y 8
  * */
 #define NUMBER_OF_PROCESSES 8
-#define N 1e6
+#define N 1e9
 
 // Variables estáticas para que los procesos compartan pids
 static pid_t hijos[NUMBER_OF_PROCESSES];

@@ -53,11 +53,11 @@ int main(int argc, char *argv[]){
         printf("Hilo principal. Creando hilo %d\n", i);
         
         arguments[i].tid = i; /* Guardamos el tid*/
-        /* Alojamos meoria para la pila de cada hilo */
+        /* Alojamos memoria para la pila de cada hilo */
         stack = mmap(NULL, STACK_SIZE, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS | MAP_STACK, -1, 0);
         
         arguments[i].stack = stack;
-    
+
         if(stack == MAP_FAILED){
             printf("Error en la reserva de memoria de la pila del hilo :%d", i);
             exit(EXIT_FAILURE);
@@ -66,7 +66,7 @@ int main(int argc, char *argv[]){
         stack_top = stack + STACK_SIZE; /* Asumimos que la pila crece hacia posiciones de memoria más bajas*/
         //Creación del hilo
         threads[i] = clone(thread_function, stack_top,  CLONE_VM | CLONE_FS | CLONE_FILES | CLONE_SIGHAND, (void *)&arguments[i]);
-        printf("%ld\n", threads[i]);
+        printf("\t%ld\n", threads[i]);
         //Comprobación de que se crea correctamente
         if(threads[i] == -1){
             printf("Error en la creación del hilo %ld\n", threads[i]);
@@ -99,7 +99,7 @@ int thread_function(void *arguments){
 
     aux = (args *) arguments;
 
-    printf("Aquí el hilo %d\n", (int)aux->tid);
+    printf("\tAquí el hilo %d\n", (int)aux->tid);
 
     for(k=10*(long int)aux->tid; k<N; k+=(10*NUMBER_OF_THREADS)){
         for(j=0;j<10 && (j+k)<N;j++){
