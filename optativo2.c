@@ -10,6 +10,7 @@
 #include <unistd.h>
 #include <math.h>
 #include <sys/mman.h>
+#include <sys/time.h>
 
 /** Número de hilos del ordenador: 16.
  *  NUMBER_OF_THREADS debe tomar un valor entre 1 y 16
@@ -45,10 +46,17 @@ int main(int argc, char *argv[]){
     args arguments[NUMBER_OF_THREADS];
     pthread_t threads[NUMBER_OF_THREADS];
     int i;
-    double pi_main=0.0, pi_threads=0.0;
+    double pi_main=0.0, pi_threads=0.0, time_main, time_threads, overhead;
+    struct timeval inicio, final;
     char* stack;
     char* stack_top;
-    
+
+    //Cálculo overhead
+    gettimeofday(&inicio, NULL);
+    gettimeofday(&final, NULL);
+    overhead = (double)(final.tv_sec-inicio.tv_sec)+((double)(final.tv_usec-inicio.tv_usec)/1.e6);
+
+    gettimeofday(&inicio, NULL);
     for(i=0; i < NUMBER_OF_THREADS; i++){
         printf("Hilo principal. Creando hilo %d\n", i);
         
@@ -66,7 +74,7 @@ int main(int argc, char *argv[]){
         stack_top = stack + STACK_SIZE; /* Asumimos que la pila crece hacia posiciones de memoria más bajas*/
         //Creación del hilo
         threads[i] = clone(thread_function, stack_top,  CLONE_VM | CLONE_FS | CLONE_FILES | CLONE_SIGHAND, (void *)&arguments[i]);
-        printf("\t%ld\n", threads[i]);
+        //printf("\t%ld\n", threads[i]);
         //Comprobación de que se crea correctamente
         if(threads[i] == -1){
             printf("Error en la creación del hilo %ld\n", threads[i]);
@@ -80,12 +88,22 @@ int main(int argc, char *argv[]){
         printf("Suma parcial hilo %2d: %.30f\n", i, partial_sum[i]);
         pi_threads+=partial_sum[i];
     }
-    printf("Valor de pi calculado con hilos concurrentes: %.30f\n", pi_threads);
+    gettimeofday(&final, NULL);
+    time_threads = (double)(final.tv_sec-inicio.tv_sec)+((double)(final.tv_usec-inicio.tv_usec)/1.e6) - overhead;
 
+    printf("\nValor de pi calculado con hilos concurrentes: %.30f\n"
+           "Tiempo consumido con hilos concurrentes: %lf\n\n", pi_threads, time_threads);
+
+    gettimeofday(&inicio, NULL);
     for(i=0; i<N; i++){
         pi_main += ( 4./((double)(8*i+1)) - 2./((double)(8*i+4)) - 1./((double)(8*i+5)) - 1./((double)(8*i+6)) )/pow(16.,(double)i);
     }
-    printf("\nValor de pi calculado con el hilo principal: %.30f\n", pi_main);
+    gettimeofday(&final, NULL);
+    time_main = (double)(final.tv_sec-inicio.tv_sec)+((double)(final.tv_usec-inicio.tv_usec)/1.e6) - overhead;
+    printf("Valor de pi calculado con el hilo principal: %.30f\n"
+           "Tiempo consumido con el hilo principal: %lf\n\n", pi_main, time_main);
+    printf("Diferencia en el valor calculado: %.30f\n"
+           "Diferencia en el tiempo consumido: %f\n", fabs(pi_main-pi_threads), fabs(time_main-time_threads));
 
     exit(EXIT_SUCCESS);
 }

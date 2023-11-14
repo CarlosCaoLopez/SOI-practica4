@@ -9,6 +9,7 @@
 #include <unistd.h>
 #include <math.h>
 #include <sys/wait.h>
+#include <sys/time.h>
 
 
 /** Número de procesos del ordenador: 8.
@@ -37,8 +38,15 @@ int main(int argc, char *argv[]){
     //pthread_t threads[NUMBER_OF_PROCESSES];
     int i, hijo;
     pid_t padre=getpid();
-    double pi_main=0.0, pi_processes=0.0, partial_sum;
+    double pi_main=0.0, pi_processes=0.0, partial_sum, time_main, time_processes, overhead;
+    struct timeval inicio, final;
     FILE *f;
+
+    //Cálculo overhead
+    gettimeofday(&inicio, NULL);
+    gettimeofday(&final, NULL);
+    overhead = (double)(final.tv_sec-inicio.tv_sec)+((double)(final.tv_usec-inicio.tv_usec)/1.e6);
+
 
     f= fopen("processes_data", "w+");
     if(f==NULL){
@@ -46,7 +54,7 @@ int main(int argc, char *argv[]){
         exit(EXIT_FAILURE);
     }
 
-
+    gettimeofday(&inicio, NULL);
     for(i=0; i < NUMBER_OF_PROCESSES; i++){
         printf("Proceso principal. Creando hijo %d\n", i);
 
@@ -71,14 +79,24 @@ int main(int argc, char *argv[]){
             printf("Suma parcial hijo %d: %.30f\n", hijo, partial_sum);
             pi_processes += partial_sum;
         }
+        gettimeofday(&final, NULL);
+        time_processes = (double)(final.tv_sec-inicio.tv_sec)+((double)(final.tv_usec-inicio.tv_usec)/1.e6) - overhead;
 
         fclose(f);
 
-        printf("Valor de pi calculado con hijos concurrentes: %.30f\n", pi_processes);
+        printf("\nValor de pi calculado con hijos concurrentes: %.30f\n"
+               "Tiempo consumido con procesos concurrentes: %lf\n\n", pi_processes, time_processes);
 
+        gettimeofday(&inicio, NULL);
         for(i=0; i<N; i++)
             pi_main += ( 4./((double)(8*i+1)) - 2./((double)(8*i+4)) - 1./((double)(8*i+5)) - 1./((double)(8*i+6)) )/pow(16.,(double)i);
-        printf("\nValor de pi calculado con el proceso padre: %.30f\n", pi_main);
+        gettimeofday(&final, NULL);
+        time_main = (double)(final.tv_sec-inicio.tv_sec)+((double)(final.tv_usec-inicio.tv_usec)/1.e6) - overhead;
+        printf("Valor de pi calculado con el proceso padre: %.30f\n"
+               "Tiempo consumido con el proceso principal: %lf\n\n", pi_main, time_main);
+
+        printf("Diferencia en el valor calculado: %.30f\n"
+               "Diferencia en el tiempo consumido: %f\n", fabs(pi_main-pi_processes), fabs(time_main-time_processes));
 
         exit(EXIT_SUCCESS);
     }
